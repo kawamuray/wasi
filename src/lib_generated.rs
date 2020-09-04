@@ -1507,6 +1507,16 @@ pub unsafe fn random_get(buf: *mut u8, buf_len: Size) -> Result<()> {
     }
 }
 
+pub unsafe fn sock_connect(ipv4_addr: u32, port: u16) -> Result<Fd> {
+    let mut sock_fd = MaybeUninit::uninit();
+    let rc = wasi_snapshot_preview1::sock_connect(ipv4_addr, port, sock_fd.as_mut_ptr());
+    if let Some(err) = Error::from_raw_error(rc) {
+        Err(err)
+    } else {
+        Ok(sock_fd.assume_init())
+    }
+}
+
 /// Receive a message from a socket.
 /// Note: This is similar to `recv` in POSIX, though it also supports reading
 /// the data into multiple buffers in the manner of `readv`.
@@ -1830,6 +1840,7 @@ pub mod wasi_snapshot_preview1 {
         /// required, it's advisable to use this function to seed a pseudo-random
         /// number generator, rather than to provide the random data directly.
         pub fn random_get(buf: *mut u8, buf_len: Size) -> Errno;
+        pub fn sock_connect(ipv4_addr: u32, port: u16, sock_fd: *mut Fd) -> Errno;
         /// Receive a message from a socket.
         /// Note: This is similar to `recv` in POSIX, though it also supports reading
         /// the data into multiple buffers in the manner of `readv`.
